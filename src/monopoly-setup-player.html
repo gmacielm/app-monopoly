@@ -1,0 +1,211 @@
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/iron-selector/iron-selector.html">
+<link rel="import" href="../bower_components/paper-item/paper-item.html">
+<link rel="import" href="../bower_components/paper-input/paper-input.html">
+<link rel="import" href="../bower_components/paper-button/paper-button.html">
+
+<dom-module id="monopoly-setup-player">
+  <template>
+    <style include="shared-styles">
+      :host {
+        display: block;
+        padding: 10px;
+      }
+
+      paper-button {
+            display: inline;
+            font-family: 'Roboto', 'Noto', sans-serif;
+            font-weight: normal;
+            font-size: 14px;
+            width: 50%;
+            height: 50px;
+            text-align: center;
+      }
+      
+      paper-button.green:hover {
+            background-color: var(--paper-green-400);
+      }
+
+      paper-button.green {
+            background-color: var(--paper-green-500);
+            color: white;
+      }
+         
+      paper-button.green[active] {
+            background-color: var(--paper-red-500);
+      }
+
+      .images-repeat{
+          display: grid;
+          grid-template-columns: repeat(5, auto);
+          align-items: center;
+      }
+
+      .images-repeat img {
+          height: 110px;
+          width: 80px;
+      }
+
+      #avatar_selected {   
+        visibility: hidden;                 
+        border: 1px solid black; 
+        align-content: center;
+        text-align: center;
+        height: 220px;
+        width: 160px;
+        margin-bottom: 20px;
+      }
+
+      #avatar_selected img{      
+        height: 100%;
+        width: 100%;
+      } 
+
+      #initial_balance{
+        visibility: hidden;       
+        margin-top: 20px;
+        padding-top: 20px;
+        width: 75%;
+      }
+
+      #lets_play {   
+        visibility: hidden;  
+        margin-top: 20px;
+        padding-top: 20px;
+      }
+    </style>
+
+    <h2 on-click="playerSetupFinish">SETUP PLAYER</h2>
+
+    <div class="images-repeat">
+        <iron-selector id="listSelection" attr-for-selected="name" selected="{{selected}}">
+            <template is="dom-repeat" items="[[avatarsAvailable]]" as="avatar">                
+                <!--  <paper-item name="[[card]]">[[card.name]]</paper-item> -->
+                 <img src="images/[[avatar.name]].jpg" name="[[avatar.name]]" alt="[[avatar.name]]"/>
+            </template>
+       </iron-selector>  
+       <div id="avatar_selected">
+          <img src="images/[[selected]].jpg"/>
+           <h1>[[selected]]</h1>
+       </div>
+    </div>  
+    <div id="initial_balance">
+      <paper-input id="initialBalance" label="Initial Balance ($MXN)" value="{{initialBalance}}" type="number">
+          <div prefix>$</div>
+      </paper-input>    
+    </div>
+    <div id="lets_play">
+      <paper-button id="btnAccount" toggles raised class="green" on-click="setUpFinish">LETS PLAY!</paper-button>
+    </div>
+</template>
+<script>
+    class MonopolySetupPlayer extends Polymer.Element {
+      static get is() { return 'monopoly-setup-player'; }
+   
+      static get properties() {
+        return {
+          selected: {
+            type: String,
+            value:'',
+            notify: true,
+            reflectToAttribute: true,
+            observer: '_itemSelected'
+          },
+          email: {
+            type: String,
+            value: 'gmacielm@gmail.com',
+            notify: true, 
+           },
+           page:{
+                 type: String,
+                 value: 'app-monopoly',                        
+            }, 
+           avatarsAvailable:{
+               type: Array, 
+               value: [],
+               notify: true,
+               reflectToAttribute: true, 
+               observer: '_avatarsChange'
+           },
+           avatarsUsed:{
+               type: Array,
+               value: [ 
+                { key: 'augusto', name: 'Augusto'}
+              ]
+           },
+           initialBalance: {
+            type: Number,
+            value: 0,
+            notify: true, 
+            observer: '_balanceChange'
+           }, 
+        };
+      } 
+
+     connectedCallback(){
+          super.connectedCallback();         
+      } 
+
+     playerSetupFinish(){
+      let details= [];
+      details.push({ page:this.page });  
+              this.dispatchEvent(new CustomEvent('clicplayerSetupFinish', { 
+                bubbles:  true,
+                composed: true,
+                detail:   details
+         }));  
+      }   
+
+      _itemSelected(){
+        //console.log(`se selecciona: [${this.selected}]`);
+        if(this.selected) {
+            this.$.avatar_selected.style.visibility = "visible";
+         }
+        if(this.selected) {
+          this.$.initial_balance.style.visibility = "visible";
+        }
+      }
+
+      _balanceChange(){
+        console.log(`this.initialBalance: [${this.initialBalance}]`);
+        if(this.initialBalance > 0) {
+            this.$.lets_play.style.visibility = "visible";
+         }
+      }
+
+      _avatarsChange(){
+        console.log(`this.avatarsAvailable:[SETUP]-[${JSON.stringify(this.avatarsAvailable)}]`);
+      }
+
+       _writePlayerData(avatar, balance, status) {
+            firebase.database().ref('players/').set({
+              avatar: avatar,
+              balance: balance,
+              status : status
+            });
+        }
+
+     
+      setUpFinish(){
+        // **** parte de trabajo con firebase **************
+        this._writePlayerData(this.selected, this.initialBalance, 'playing');
+
+        // **** parte de trabajo con firebase **************
+
+        let details= [];
+        details.push({ page:'dashboard', avatar: this.selected, initial_balance: this.initialBalance });        
+        console.log(`details:[${JSON.stringify(details)}]`);
+        
+        this.dispatchEvent(new CustomEvent('set-up-finish', { 
+                bubbles:  true,
+                composed: true,
+                detail:  details,        
+         }));    
+       }
+
+
+ } // class 
+    window.customElements.define(MonopolySetupPlayer.is, MonopolySetupPlayer);
+</script>
+</dom-module>
+

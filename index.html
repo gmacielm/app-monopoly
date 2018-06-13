@@ -59,6 +59,24 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <meta name="msapplication-TileColor" content="#3f51b5">
     <meta name="msapplication-tap-highlight" content="no">
 
+    <script src="https://www.gstatic.com/firebasejs/4.10.1/firebase-app.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/4.10.1/firebase-auth.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/4.10.1/firebase-database.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/5.0.4/firebase.js"></script>
+    <script>
+      // Initialize Firebase
+      var config = {
+        apiKey: "AIzaSyCJZ6nUZG2qkUOnHJiCBevmZKEaC2lvIOE",
+        authDomain: "app-monopoly.firebaseapp.com",
+        databaseURL: "https://app-monopoly.firebaseio.com",
+        projectId: "app-monopoly",
+        storageBucket: "app-monopoly.appspot.com",
+        messagingSenderId: "598097542463"
+      };
+      var monopolyApp = firebase.initializeApp(config);
+      //@argument monopolyDb = monopolyApp.database();
+    </script>
+
     <script>
       /**
       * [polymer-root-path]
@@ -68,9 +86,9 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
       * path (e.g., with URLs like `my.domain/` and `my.domain/view1`).
       *
       * If you intend to serve your app from a non-root path (e.g., with URLs
-      * like `my.domain/my-app/` and `my.domain/my-app/view1`), edit this line
+      * like `my.domain/app/` and `my.domain/app/view1`), edit this line
       * to indicate the path from which you'll be serving, including leading
-      * and trailing slashes (e.g., `/my-app/`).
+      * and trailing slashes (e.g., `/app/`).
       */
       window.Polymer = {rootPath: '/'};
 
@@ -88,7 +106,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     <script src="bower_components/webcomponentsjs/webcomponents-loader.js"></script>
 
     <!-- Load your application shell -->
-    <link rel="import" href="src/my-app.html">
+    <link rel="import" href="src/app-monopoly.html">
 
     <!-- Add any global styles for body, document, etc. -->
     <style>
@@ -102,7 +120,7 @@ subject to an additional IP rights grant found at http://polymer.github.io/PATEN
     </style>
   </head>
   <body>
-    <my-app></my-app>
+    <app-monopoly monopolyApp="monopolyApp" monopolyDb="monopolyDb"></app-monopoly>
     <noscript>
       Please enable JavaScript to view this website.
     </noscript>

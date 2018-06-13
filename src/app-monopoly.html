@@ -1,0 +1,286 @@
+<!--
+@license
+Copyright (c) 2016 The Polymer Project Authors. All rights reserved.
+This code may only be used under the BSD style license found at http://polymer.github.io/LICENSE.txt
+The complete set of authors may be found at http://polymer.github.io/AUTHORS.txt
+The complete set of contributors may be found at http://polymer.github.io/CONTRIBUTORS.txt
+Code distributed by Google as part of the polymer project is also
+subject to an additional IP rights grant found at http://polymer.github.io/PATENTS.txt
+-->
+
+<link rel="import" href="../bower_components/polymer/polymer-element.html">
+<link rel="import" href="../bower_components/app-layout/app-drawer/app-drawer.html">
+<link rel="import" href="../bower_components/app-layout/app-drawer-layout/app-drawer-layout.html">
+<link rel="import" href="../bower_components/app-layout/app-header/app-header.html">
+<link rel="import" href="../bower_components/app-layout/app-header-layout/app-header-layout.html">
+<link rel="import" href="../bower_components/app-layout/app-scroll-effects/app-scroll-effects.html">
+<link rel="import" href="../bower_components/app-layout/app-toolbar/app-toolbar.html">
+<link rel="import" href="../bower_components/app-route/app-location.html">
+<link rel="import" href="../bower_components/app-route/app-route.html">
+<link rel="import" href="../bower_components/iron-pages/iron-pages.html">
+<link rel="import" href="../bower_components/iron-selector/iron-selector.html">
+<link rel="import" href="../bower_components/paper-icon-button/paper-icon-button.html">
+<link rel="import" href="monopoly-icons.html">
+
+<link rel="lazy-import" href="monopoly-login.html">
+<link rel="lazy-import" href="monopoly-setup-player">
+<link rel="lazy-import" href="view3.html">
+<link rel="lazy-import" href="view-404.html">
+
+<dom-module id="app-monopoly">
+  <template>
+    <style>
+      :host {
+        --app-primary-color: #4285f4;
+        --app-secondary-color: black;
+
+        display: block;
+      }
+
+      app-drawer-layout:not([narrow]) [drawer-toggle] {
+        display: none;
+      }
+
+      app-header {
+        color: #fff;
+        background-color: var(--app-primary-color);
+      }
+
+      app-header paper-icon-button {
+        --paper-icon-button-ink-color: white;
+      }
+
+      .drawer-list {
+        margin: 0 20px;
+      }
+
+      .drawer-list a {
+        display: block;
+        padding: 0 16px;
+        text-decoration: none;
+        color: var(--app-secondary-color);
+        line-height: 40px;
+      }
+
+      .drawer-list a.iron-selected {
+        color: black;
+        font-weight: bold;
+      }
+
+      app-drawer p {
+        padding-left: 40px;
+        visibility: hidden;
+        }
+
+      #avatar{
+        width: 150px;
+        height: 180px;
+        visibility: hidden;
+      }
+      #avatar_text{        
+        visibility: hidden;
+        font-family: Arial, Helvetica, sans-serif;
+        font-weight: bold;
+        width: 120px;
+        color:antiquewhite;
+        background-color: rgb(112, 124, 124);
+      }
+
+      #setup_game_link{
+        visibility: hidden;
+      }
+    </style>
+
+    <app-location
+        route="{{route}}"
+        url-space-regex="^[[rootPath]]">
+    </app-location>
+
+    <app-route
+        route="{{route}}"
+        pattern="[[rootPath]]:page"
+        data="{{routeData}}"
+        tail="{{subroute}}">
+    </app-route>
+
+    <app-drawer-layout fullbleed narrow="{{narrow}}">
+      <!-- Drawer content -->
+      <app-drawer id="drawer" slot="drawer" swipe-open="[[narrow]]">
+        <app-toolbar id="toolbar_menu">Menu </app-toolbar>       
+            <img id="avatar" src="images/[[avatar]].jpg"/>
+            <p id="avatar_text">[[avatar]]</p>        
+        <iron-selector selected="[[page]]" attr-for-selected="name" class="drawer-list" role="navigation">
+          <a id="login_link" name="login" href="[[rootPath]]monopoly-login">Login</a>
+          <a id="setup_link" name="setup" href="[[rootPath]]monopoly-setup-player">Setup Player</a>
+          <a name="view3" href="[[rootPath]]view3">View Three</a>
+          <a id="setup_game_link" name="view3" href="[[rootPath]]view3">Setup Game</a>
+        </iron-selector>
+      </app-drawer>
+
+      <!-- Main content -->
+      <app-header-layout has-scrolling-region>
+
+        <app-header id="toolbar_header" slot="header" condenses reveals effects="waterfall">
+          <app-toolbar >
+            <paper-icon-button icon="monopoly-icons:menu" drawer-toggle></paper-icon-button>
+            <div main-title>Monopoly App MushiEl</div>
+          </app-toolbar>
+        </app-header>
+
+        <iron-pages
+            selected="[[page]]"
+            attr-for-selected="name"
+            fallback-selection="view-404"
+            role="main">
+          <monopoly-login name="monopoly-login" on-player-logged="changePage"></monopoly-login>
+          <monopoly-setup-player name="monopoly-setup-player" avatars-available="{{avatarsAvailable}}" on-set-up-finish="changePage"></monopoly-setup-player>
+          <view3 name="view3"></view3>
+          <view-404 name="view-404"></view-404>
+        </iron-pages>
+      </app-header-layout>
+    </app-drawer-layout>
+  </template>
+
+  <script>
+    // Gesture events like tap and track generated from touch will not be
+    // preventable, allowing for better scrolling performance.
+    Polymer.setPassiveTouchGestures(true);
+
+    class AppMonopoly extends Polymer.Element {
+      static get is() { return 'app-monopoly'; }
+
+      static get properties() {
+        return {
+          page: {
+            type: String,
+            reflectToAttribute: true,
+            observer: '_pageChanged',
+          },
+          routeData: Object,
+          subroute: Object,
+          // This shouldn't be neccessary, but the Analyzer isn't picking up
+          // Polymer.Element#rootPath
+          rootPath: String,
+          config:{
+             type: Object,             
+           },
+           database:{
+             type: Object,             
+           },
+          avatarsAvailable:{
+               type: Array,
+               value: []
+           },
+           avatar:{
+               type: String,
+               value: 'default',
+               notify: true,
+               reflectToAttribute: true, 
+               observer: 'changeAvatar',
+
+            } 
+        };
+      }
+
+      static get observers() {
+        return [
+          '_routePageChanged(routeData.page)',
+        ];
+      }
+
+      _routePageChanged(page) {
+        // If no page was found in the route data, page will be an empty string.
+        // Default to 'view1' in that case.
+        this.page = page || 'monopoly-login';
+
+        // Close a non-persistent drawer when the page & route are changed.
+        if (!this.$.drawer.persistent) {
+          this.$.drawer.close();
+        }
+      }
+
+      _pageChanged(page) {
+        // Load page import on demand. Show 404 page if fails
+        const resolvedPageUrl = this.resolveUrl(page + '.html');
+        Polymer.importHref(
+            resolvedPageUrl,
+            null,
+            this._showPage404.bind(this),
+            true);
+      }
+
+      _showPage404() {
+        this.page = 'view-404';
+      }
+
+      constructor(){
+        super();     
+        this.database = firebase.database();
+        this.avatarsAvailable = {};
+      }
+
+       // transpile the format of firebase json to noSQL standar json
+       jsonTranspiler(snapshot) {
+          let i = 0;
+          let array = [];
+          let object = {};
+          let dataValues = {};
+          snapshot.forEach(data => {
+            object['id'] = data.key;
+            dataValues = data.val();
+
+            for (const prop in dataValues) {
+              object[prop] = dataValues[prop];
+            }
+
+            array[i] = object;
+            i++;
+            object = {};
+          });
+          return array;
+        }
+
+      getAllAvatars() {
+          this.database.ref('avatars').on("value", snapshot => {       
+          this.avatarsAvailable = this.jsonTranspiler(snapshot);
+          console.log(`this.avatarsAvailable:[APP]-[${JSON.stringify(this.avatarsAvailable)}]`);         
+        });
+      }
+
+      connectedCallback() {
+        super.connectedCallback();       
+        this.$.toolbar_menu.style.visibility = "hidden";
+        this.$.toolbar_header.style.visibility = "hidden";
+        this.$.drawer.style.visibility = "hidden";
+        this.$.setup_game_link.style.visibility = "hidden";
+        this.getAllAvatars();
+      }
+
+      changePage(event) {  
+        console.log(`page  [${event.detail[0].page}]`);              
+        this.$.toolbar_menu.style.visibility = "visible";
+        this.$.toolbar_header.style.visibility = "visible";
+        this.$.drawer.style.visibility = "visible";
+        this.set('page', event.detail[0].page);                
+        this.set('avatar', event.detail[0].avatar); 
+        if(this.avatar) {
+          this.$.avatar.style.visibility = "visible";
+          if(this.avatar !== 'default') this.$.avatar_text.style.visibility = "visible"; 
+          if(this.avatar === 'BANK') this.$.setup_game_link.style.visibility = "visible"; 
+          this.$.login_link.style.visibility = "hidden"; 
+          this.$.setup_link.style.visibility = "hidden"; 
+        }            
+      } 
+
+      changeAvatar(){
+        console.log(`avatar (changeAvatar:app) [${this.avatar}]`);   
+        if(!this.avatar)  this.set('avatar', 'default');    
+      }
+
+
+
+    } // class
+
+    window.customElements.define(AppMonopoly.is, AppMonopoly);
+  </script>
+</dom-module>
